@@ -1,36 +1,37 @@
 # podman to run gICS
 
-gICS - as all tools provided by "(unabhängige) Treuhandstelle Greifswald" (https://www.ths-greifswald.de/en/researchers-general-public/gics/) comes in a 
+gICS - like all tools provided by "(unabhängige) Treuhandstelle Greifswald" (https://www.ths-greifswald.de/en/researchers-general-public/gics/) comes in a 
 containerized format. However - as of this writing - all scripts and documentation refer to docker as runtime - which is OK for workstations
-but only a 2nd best choice when it comes to servers, 24/7 operations, small resource footprint and attack service and disaster recovery.
+but only a 2nd best choice when it comes to servers, 24/7 operations, small resource footprint (= costs) and attack surface and executable disaster recovery plans.
 
 The purpose of this article is to demonstrate how gICS can be operated in a more server-like environment optimized for better security and 
-low resource footprint ("costs") for 24/7 operations
+low resource footprint for 24/7 operations with a simple disaster recovery plan.
 
 ## disclaimer
 
-As with all community contributions this is neither a fully-support product nor in any way assiciated with my employer or any other company.
+As with all community contributions this is neither a fully-supported product nor in any way associated with my employer or any other company or legal entity.
 It may contain bugs and may lack handling of certain situations and incidents. It may have been reduced and simplified for clarity to understand
 the concepts rather than provide a bullet-proof solution.
 
 
 ## what is podman? 
 
-There are much better and more comprehensive articles out there which explain who has initiated podman as a docker replacement and why -
-for the purpose of this community contribution I would only highlight to the common ground that both docker and podman both use container runtime
+There are plenty of much better and more comprehensive articles out there which explain who has initiated podman as a docker drop in replacement and why -
+for the purpose of this community contribution I would like to highlight first the *common ground* that both docker and podman both use container runtime
 libraries based on the OCI standard - this provides a huge level of compatibilities between both options.
 
-however, the podman addresses a few by-design issues from docker like
+however, podman addresses and fixed a few by-design issues from docker like
 
 - need of a root-privilegded service
 - potentially insecure communication between containers by docker.sock
+- insecurities in multi-user setups
 
 which is why especially Enterprise Linux distros like RedHat (incl Fedora) and SUSE decided to stop support for docker in favor of podman.
 
 However, podman is available on all major Linux distros (caution it may come in *outdated* versions when installed by the *standard* package manager)
-as well as docker (CE = community Edition) can still be installed on Enterprise Linux but without vendor backup when it comes to support
+as well as docker (CE = community Edition) can still be installed on Enterprise Linux at your own risk / without vendor support
 
-Frankly speaking many concepts for podman are rather a backport from kubernetes paired with the simplicity of docker
+Frankly speaking many concepts for podman are rather a kind of backport from kubernetes - paired with the simplicity of docker
 
 please refer to  
 
@@ -40,16 +41,16 @@ for instance as one out of many good articles regarding this topic - for more de
 
 ## fedora CoreOS
 
-The easiest way to install podman is to install a host operating system in which it is already included by default - like CoreOS (sometimes also referred as
-FCOS = Fedora Core OS). As the name indicates it is now a variant of Fedora to provide a secure minimal Linux to run container workloads (with podman by default) -
+The easiest way to install podman is to install a host operating system in which it is already included by default - like CoreOS (nowadays also referred as
+FCOS = Fedora Core OS). As the name indicates it is now a variant of Fedora to provide a secure minimal Linux designed to run container workloads (with podman by default) -
 CoreOS is also used by RedHat Openshift - https://www.redhat.com/en/technologies/cloud-computing/openshift/what-was-coreos
 
 Key features are a minimized Linux with current kernel and fixes and hence low attack surface. After installation most parts are readonly and updates are
 applied to a layered filesystem (like in containers itself) - this makes rollback easy in case of issues and ensures integrity of (most of the) code.
-And built-in updater install updates automatically usually once or twice a month.
+And the built-in updater service (zincati) installs updates automatically usually once or twice a month - and can be paused in case of issues.
 
 You will probably miss a graphically user interface or a package manager which allows to install more packages - both are against the basic concepts.
-E.g. if a python3 runtime is needed then a container containing one is spin up to do the processing - instead of installing it into the OS.  
+E.g. if a python3 runtime is needed then a container containing python3 is spin up to do the processing - instead of installing python3 into the OS itself.  
 Even for debugging in CoreOS itself it uses a special debug container. It is cleaner - and easier to get rid of things which are no longer needed.
 
 ### CoreOS download 
@@ -65,7 +66,7 @@ and scroll down on that page - Fedora CoreOS should appear in the list open vari
 click "download now" and pay attention that the version is "stable" and your architecture is likely "x86_64" and "bare metal" - "Live DVD ISO"
 is the correct version if you are operating on own hardware - and not in any of the cloud environments.
 
-please remember where we downloaded this ISO file
+please remember where exactly this ISO file was downloaded
 
 
 
@@ -79,9 +80,9 @@ so the first thing to do is create a public/private keypair
 and then add the public key to a so-called ignition file which is used to automatically configure Fedora CoreOS during install.
 Ignition file can be used to apply many different configuration setting - but we will only focus here for the login key as the bare minimum.
 
-`ssh-keygen coreos`
+`ssh-keygen -f coreos`
 
-which creates two files
+which creates two files in the current directory
 
 ```
 coreos
@@ -89,8 +90,8 @@ coreos.pub
 
 ```
 
-
-then the *public* key must be added to the ignition file (copy the full file content in [ ] at "sshAuthorizedKeys" )
+First you may want to copy away the file "coreos" which contains the private key to a safe place.
+Then the *public* key must be added to the ignition file (copy the full file content in [ ] at "sshAuthorizedKeys" )
 
 ```
 
@@ -108,7 +109,7 @@ then the *public* key must be added to the ignition file (copy the full file con
         ],
         "name": "core",
         "sshAuthorizedKeys": [
-          "ssh-rsa AAAAB3NzaC1y...er7Q7/7 coreos"
+          "ssh-rsa AAAAB3NzaC1y...your-public-key-in-this-line...er7Q7/7 coreos"
         ]
       }
     ]
