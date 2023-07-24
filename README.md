@@ -53,6 +53,9 @@ You will probably miss a graphically user interface or a package manager which a
 E.g. if a python3 runtime is needed then a container containing python3 is spin up to do the processing - instead of installing python3 into the OS itself.  
 Even for debugging in CoreOS itself it uses a special debug container. It is cleaner - and easier to get rid of things which are no longer needed.
 
+There is a very similar alternative to Fedora (IBM RedHat) CoreOS which is "flatcar Linux" by "kinvolk.io" (now a Microsoft(!) company)
+
+ 
 ### CoreOS download 
 
 
@@ -61,7 +64,7 @@ go to
 
 https://fedoraproject.org/
 
-and scroll down on that page - Fedora CoreOS should appear in the list open various options and flavours - rather at the end
+and scroll down on that page - Fedora CoreOS should appear in the list of various options and flavours - likely at the very end of the page
 
 click "download now" and pay attention that the version is "stable" and your architecture is likely "x86_64" and "bare metal" - "Live DVD ISO"
 is the correct version if you are operating on own hardware - and not in any of the cloud environments.
