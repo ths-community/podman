@@ -133,7 +133,7 @@ in your local network or in the Internet. You may want to check with a browser t
 
 If you don't have a webserver you can use github.com for this purpose.
 
-To do this create a github account on github.com for free if you have one already. 
+To do this ... create a github account on github.com for free if you do not have one already. 
 
 Then go this community workspace
 
@@ -149,7 +149,7 @@ where YOURNAME is the name of your github account.
 Note: You may feel uncomfortable to put a public key to a public webserver - but this is what public keys are made for.
 However, there is a (very small) risk that if a hacker comes in possession ob private(!) keys they may use those to test which public key will fit
 and then use this knowledge to made it part of an attack plan. But if a hacker has your private keys already then publicly visible public keys
-are your your least problem then.
+are your least problem then.
 
 ### CoreOS - install
 
@@ -158,12 +158,12 @@ CoreOS is made for *server* use-cases - here is a word of warning:
 **CAUTION!!!** - the installtion procedure will always grab the full harddisk and overwrite existing content without any further warning.
 It is *NOT* made for co-existence with other operating systems like Windows, Linux oder MacOS which you know from desktop setups.
 
-There are two easily way to deal with this "special feature"
+There are two easily ways to deal with this "special feature"
 
-* Use a type1 hypervisor like Proxmox, Hyper-V oder ESXi - or at least VirtualBox or VMware workstation - to provide a virtual machine with seperated virtual disks
+* Use a type1 hypervisor like Proxmox, Hyper-V oder ESXi - or at least VirtualBox or VMware player/workstation - to provide a virtual machine with seperated virtual disks
 * Use a seperate hardware PC or notebook which does NOT contain anything (any more) that is still needed
 
-In a hypervisior / virtual target machine you can configure to use the ISO as virtual CD-ROM -
+In a hypervisior / virtual target machine you can configure to use the ISO as virtual DVD / CDROM -
 
 In case of a real hardware (called: bare metal) you need to burn the ISO file onto a DVD (not recommended) or
 make a raw copy to an USB device (recommended) - to make such a bootable USB stick use a tool like "rufus" under windows - or in Linux it is
@@ -216,13 +216,13 @@ Either way (second disk is a real harddisk, high-quality USB Stick or a virtual 
 
 **Partioning**
 
-enter `fdisk /dev/sdb` then add a primary partition - on a blank device this goes by 'n'(ew) > 1 (first partition) > 'p'(rimary) and accept suggested 
+enter `sudo fdisk /dev/sdb` then add a primary partition - on a blank device this goes by 'n'(ew) > 1 (first partition) > 'p'(rimary) and accept suggested 
 start cylinder and size - you may want to review your setting with 'p'(rint) - when it is OK press 'w'(rite) to commit the change and write 
 this data to the disk
 
 **create filesystem**
 
-enter `mkfs /dev/sdb1` to create a standard filesystem on this data disk - the 1 in the device name refers to the partition number 1 you just created
+enter `sudo mkfs /dev/sdb1` to create a standard filesystem on this data disk - the 1 in the device name refers to the partition number 1 you just created
 
 **create mount directory**
 
@@ -234,6 +234,12 @@ because most parts of the boot disk is read-only and hence does not allow creati
 create a file `/etc/fstab` (find sample in folder 'etc' here in this repo) with the following content:
 
 `/dev/sdb1 /var/disk1 ext4 defaults 0 0`
+
+e.g. with
+
+`sudo echo '/dev/sdb1 /var/disk1 ext4 defaults 0 0' >> /etc/fstab`
+
+or your favorite text editor (e.g. vi, vim, nano)
 
 **test mount**
 
