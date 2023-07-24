@@ -1,0 +1,18 @@
+[Unit]
+Description=Podman pod-bunkerweb.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+Type=simple
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+ExecStartPre=/usr/bin/podman pod rm -f -i bunkerweb
+ExecStart=/usr/bin/podman play kube /home/core/.config/bunker006.yaml
+
+ExecStop=/usr/bin/podman pod stop bunkerweb
+ExecStopPost=/usr/bin/podman pod rm bunkerweb
+
+[Install]
+WantedBy=default.target

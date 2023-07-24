@@ -1,0 +1,18 @@
+[Unit]
+Description=Podman pod-keycloak.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+Type=simple
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+ExecStartPre=/usr/bin/podman pod rm -f -i keycloak04
+ExecStart=/usr/bin/podman play kube /home/core/.config/keycloak04.yaml
+
+ExecStop=/usr/bin/podman pod stop keycloak04
+ExecStopPost=/usr/bin/podman pod rm keycloak04
+
+[Install]
+WantedBy=default.target

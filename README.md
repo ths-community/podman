@@ -39,7 +39,7 @@ https://indico.cern.ch/event/757415/contributions/3421994/attachments/1855302/30
 
 for instance as one out of many good articles regarding this topic - for more detailed docker/podman comparision and reasoning
 
-## fedora CoreOS
+## install podman on fedora CoreOS
 
 The easiest way to install podman is to install a host operating system in which it is already included by default - like CoreOS (nowadays also referred as
 FCOS = Fedora Core OS). As the name indicates it is now a variant of Fedora to provide a secure minimal Linux designed to run container workloads (with podman by default) -
@@ -70,7 +70,7 @@ please remember where exactly this ISO file was downloaded
 
 
 
-### CoreOS - prepare login
+### CoreOS - prepare login keys
 
 "security first" requires that login by default is key-based - not username/password (which is considered vastly insecure).
 There is an option for username/password for the local console only - which is out of scope here
@@ -91,6 +91,10 @@ coreos.pub
 ```
 
 First you may want to copy away the file "coreos" which contains the private key to a safe place.
+
+### CoreOS - prepare ignition file for basic config
+
+To continute in the installation of CoreOS we need to prepare a so-called 'ignition' file (find a version *without* key content in folder 'ignition').
 Then the *public* key must be added to the ignition file (copy the full file content in [ ] at "sshAuthorizedKeys" )
 
 ```
@@ -118,17 +122,40 @@ Then the *public* key must be added to the ignition file (copy the full file con
 
 ```
 
-finally put this file on any webserver (if you don't have one ... you may want to create a github account and put in a new repo)
+### CoreOS - put ignition file onto a webserver
 
-Note: You may feel uncomfortable to put a public key to a public webserver - but this is why public keys are made for.
+The CoreOS installtion procedure will need to find the ignition file in the network - on a webserver. This can be any webserver either
+in your local network or in the Internet. You may want to check with a browser that this file is delivered from an URL like:
+
+`https://anyserver.org/assets/config.ign`
+
+**TIPP**
+
+If you don't have a webserver you can use github.com for this purpose.
+
+To do this create a github account on github.com for free if you have one already. 
+
+Then go this community workspace
+
+`https://github.com/ths-community/podman`
+
+and use the 'fork' function to get 1:1 copy - then you can change the ignition file in the 'config' folder and add you public key.
+After the file is committed (saved) you will get the full ignition file with URL
+
+`https://raw.githubusercontent.com/YOUNAME/main/ignition/config.ign`
+
+where YOURNAME is the name of your github account.
+
+Note: You may feel uncomfortable to put a public key to a public webserver - but this is what public keys are made for.
 However, there is a (very small) risk that if a hacker comes in possession ob private(!) keys they may use those to test which public key will fit
-and then use this knowledge to made it part of an attack plan.
+and then use this knowledge to made it part of an attack plan. But if a hacker has your private keys already then publicly visible public keys
+are your your least problem then.
 
 ### CoreOS - install
 
 CoreOS is made for *server* use-cases - here is a word of warning:
 
-CAUTION - the installtion procedure will always grab the full harddisk and overwrite existing content without any further warning.
+**CAUTION!!!** - the installtion procedure will always grab the full harddisk and overwrite existing content without any further warning.
 It is *NOT* made for co-existence with other operating systems like Windows, Linux oder MacOS which you know from desktop setups.
 
 There are two easily way to deal with this "special feature"
@@ -146,7 +173,106 @@ make a raw copy to an USB device (recommended) - to make such a bootable USB sti
 where `/dev/sdX` is usually a device like `/dev/sde` - you can insert the USB stick into the machine and call `sudo dmesg` and at the end of the log you 
 can easily see which device was last inserted into the system
  
+Next power on your virtual - or real hardware - machine. YOu should see the "Fedora CoreOS" boot screen 
+which automatically boots after a few seconds. Wait for the boot to complete - which is when it allows you to enter commands like `ip a`
+to check the network configuation.
 
+### CoreOS - shutdown after install
+
+As printed on the screen the installer to complete the installation requires to enter:
+
+`sudo coreos-installer install /dev/sda --ignition-url https://YOUR.URL/config.ign`
+
+if you use github.com as webserver then it would look like this:
+
+`sudo coreos-installer install /dev/sda --ignition-url https://raw.githubusercontent.com/YOUNAME/main/ignition/config.ign`
+
+after the installation is complete then shutdown the server with 
+
+`init 0`
+
+### CoreOS - first boot after install
+
+remove the USB stick from the server - or remove CD/DVD ISO from the virtual machine config - and start the server again.
+
+This boot should start as before but now shows a 'login' message - don't try to login here, it is useless because we have not configured a password.
+Instead login via network - you should also see the IP address of this server on the console - then go to another machine which has the private(!) key
+file 'coreos' and login over network via key:
+
+`ssh -i coreos IP-ADDR`
+
+where IP-ADDR is the ip address shown on the CoreOS boot screen e.g. 192.168.55.34
+
+### CoreOS - add persistant volume
+
+This step is not necessary but strongly recommended for disaster reovery - as described above every CoreOS install completely overwrites the
+entire bootdisk - hence it is recommended to have a second disk to hold the data - which is seperated from the bootdisk.
+This 'data' disk can also be a high-quality USB Disk - only use one which allows a high number of write operations e.g. SanDisk Ultra (Extreme).
+
+On virtual machine just configure a second virtual disk, size should be 30GB
+
+Either way (second disk is a real harddisk, high-quality USB Stick or a virtual disk) assuming this data disk appears as device /dev/sdb
+- in case of doubt check disk in output of `sudo dmesg`
+
+**Partioning**
+
+enter `fdisk /dev/sdb` then add a primary partition - on a blank device this goes by 'n'(ew) > 1 (first partition) > 'p'(rimary) and accept suggested 
+start cylinder and size - you may want to review your setting with 'p'(rint) - when it is OK press 'w'(rite) to commit the change and write 
+this data to the disk
+
+**create filesystem**
+
+enter `mkfs /dev/sdb1` to create a standard filesystem on this data disk - the 1 in the device name refers to the partition number 1 you just created
+
+**create mount directory**
+
+enter `sudo mkdir /var/disk1` to create an empty directory to which the data disk will be mounted. It is important to locate this in `/var/`
+because most parts of the boot disk is read-only and hence does not allow creation of directories.
+
+**automount data disk at boot**
+
+create a file `/etc/fstab` (find sample in folder 'etc' here in this repo) with the following content:
+
+`/dev/sdb1 /var/disk1 ext4 defaults 0 0`
+
+**test mount**
+
+now mount the new connection to the data disk with
+
+`sudo mount /var/disk1`
+
+check if the second disk is added correctly - e.g. by
+
+`df -k | grep sd`
+
+should show that `/dev/sda` (boot disk) as well as `/dev/sdb` (data disk) is correctly added to the system.
+
+create a new directory on this data disk
+
+`sudo mkdir /var/disk1/containers`
+
+which will host all persistant data of our containers - and ...
+
+**change ownership**
+
+and change ownership to 'core' which is the default unprivileged user in CoreOS - which will also run all containerized workloads in order to
+avoid use of 'root'
+
+`sudo chown core /var/disk1/containers`
+ 
+**login setting**
+
+there is one more thing which we need to do in order to allow processes started by regular user 'core' to remain existant after logoff:
+
+`sudo loginctl enable-linger core`
+
+after this setting we will use 'sudo' or 'root' access rarely and most actions will be run under user 'core' even create/start/stop/remove of containers.
+
+**reboot**
+
+in order to test that everything is setup correctly please reboot again now with
+
+`sudo reboot`
 
 
 ## install podman on a different Host OS 

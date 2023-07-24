@@ -1,0 +1,299 @@
+#
+# prepare:
+#  mkdir -p /var/disk1/containers/gics010/data/{initfiles,dbconf,dbdata,applogs,appadins,appcacerts,workdir}
+# create:   podman play kube ./<thisfile>.yml
+# destroy:  podman play kube ./<thisfile>.yml --down
+#
+# https://hub.docker.com/r/mosaicgreifswald/wildfly
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: gics
+  name: gics
+spec:
+  #
+  # download (and cache after download) gics, unzip and prepare expected folder structure
+  #
+  initContainers:
+  - name: initial
+    command:
+      - /bin/sh
+      - -c
+      - |
+       ( cd
+       apk update
+       apk add zip
+       if [ ! -s $PREFIX/staging/$GICSZIP ]
+       then
+         mkdir -p $PREFIX/staging
+         cd $PREFIX/staging
+         wget --no-check-certificate "https://ths-greifswald.de/wp-content/uploads/tools/gics/$GICSZIP"
+         echo now downloaded
+       else
+         echo already downloaded into staging:
+         ls -l $PREFIX/staging/$GICSZIP
+       fi
+       cd $PREFIX
+       if [ -d $PREFIX/gics ]
+       then
+         mv gics bak-`date +%s` # rename
+         # rm -rf gics # or delete
+       fi
+       unzip -u $PREFIX/staging/$GICSZIP
+       mv gics-* gics # remove version dependency in pathname
+       echo done with GICS
+       # add demo domain - requires mysql - does not work for mariaDB or postgresql
+       # cp /opt/initfiles/gics/examples/demo_gics.sql /opt/initfiles/gics/sqls/
+       # now print current file structure into logfile for debug
+       find /opt
+       set ) > /opt/initfiles/log.txt 2>&1
+    env:
+    - name: PREFIX
+      value: /opt/initfiles
+    - name: GICSZIP
+      value: gics-2023.1.0-compose-wildfly.zip
+      # value: gics-v2.14.1-compose-wildfly.zip
+      # value: v2.13.4-compose-wildfly.zip
+    - name: NODEZIP
+      value: node004.tgz
+    image: docker.io/jitesoft/alpine:latest
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+    volumeMounts:
+    - mountPath: /opt/initfiles
+      name: var-disk1-containers-gics010-initfiles
+    # workingDir: /
+  restartPolicy: Never
+  containers:
+  - name: mysql
+    args:
+    - --transaction-isolation=READ-COMMITTED
+    - --log-bin
+    - --log-bin=mysqld-bin
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+    - --binlog-format=ROW
+    - --max_allowed_packet=20M
+    - --default-time-zone=Europe/Berlin
+    command:
+    - docker-entrypoint.sh
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: ChangeMe
+    - name: MYSQL_DATABASE
+      value: busybox
+    - name: MYSQL_USER
+      value: busybox
+    - name: MYSQL_PASSWORD
+      value: ChangeMe
+    image: docker.io/library/mysql:8.0.32-debian
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+    volumeMounts:
+    - mountPath: /etc/mysql/conf.d
+      name: var-disk1-containers-gics010-db-conf
+    - mountPath: /var/lib/mysql
+      name: var-disk1-containers-gics010-db-data
+    - mountPath: /docker-entrypoint-initdb.d
+      name: var-disk1-containers-gics010-db-init
+    # workingDir: /
+  - name: wildfly
+    command:
+      - /bin/sh
+      - -c
+      - |
+       ./wait-for-it.sh 127.0.0.1:3306 -t 120 && ./run.sh
+       while true; do sleep 30; done;
+    #    ./wait-for-it.sh $GICS_DB_HOST:$GICS_DB_PORT -t 120 && ./run.sh
+    env:
+    #CONSOLE_LOG_LEVEL=<TRACE|DEBUG|INFO|WARN|ERROR|FATAL>
+    - name: CONSOLE_LOG_LEVEL
+      value: TRACE
+    #GICS_LOG_LEVEL=<TRACE|DEBUG|INFO|WARN|ERROR|FATAL>
+    - name: GICS_FILE_LOG
+      value: TRUE
+    - name: GICS_LOG_LEVEL
+      value: TRACE
+    # DATABASE-CONNECTION FOR gICS
+    ###############################
+    # you don't need these variables if you start the image via the provided docker-compose.
+    - name: GICS_DB_HOST
+      value: 127.0.0.1
+    - name: GICS_DB_PORT
+      value: 3306
+    - name: GICS_DB_NAME
+      value: gics
+    - name: GICS_DB_USER
+      value: gics_user
+    - name: GICS_DB_PASS
+      value: gics_password
+    # AUTHENTIFICATION-MODE FOR gICS
+    #################################
+    # available values are "gras" and "keycloak". all others disable authentication.
+    # default is "none"
+    # DATABASE-CONNECTION FOR gRAS
+    ###############################
+    # you only need these variables if GICS_AUTH_MODE is "gras" and the gRAS-database is not inside the docker-compose network.
+    - name: GICS_AUTH_MODE
+      value: gras
+    - name: GRAS_DB_HOST
+      value: 127.0.0.1
+    - name: GRAS_DB_PORT
+      value: 3306
+    - name: GRAS_DB_NAME
+      value: gras
+    - name: GRAS_DB_USER
+      value: gras_user
+    - name: GRAS_DB_PASS
+      value: gras_password
+    - name: NOTI_DB_HOST
+      value: 127.0.0.1
+    # KEYCLOAK-CONNECTION
+    ######################
+    # these variables are only needed if GICS_AUTH_MODE is equal to "keycloak".
+    # - name: GICS_AUTH_MODE
+    #   value: keycloak
+    - name: KEYCLOAK_SERVER_URL
+      value: https://iam.server.com/
+    # KEYCLOAK_SSL_REQUIRED <none|external|all>
+    - name: KEYCLOAK_SSL_REQUIRED
+      value: external
+    - name: KEYCLOAK_REALM
+      value: Ttp
+    - name: KEYCLOAK_RESOURCE
+      value: Ths
+    - name: KEYCLOAK_CLIENT_SECRET
+      value: 8PS91xxxxxxxiEu1HQWDDCBevEwHdgwH
+    - name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
+      value: true
+    - name: KEYCLOAK_CONFIDENTIAL_PORT
+      value: 0
+    #    - name: KEYCLOAK_CONFIDENTIAL_PORT
+    #      value: 8444
+    # ADMIN-PASSWORD TO ADMINISTRATE WILDFLY
+    #########################################
+    # if this value is not set, a random password is automatically generated at the first start.
+    - name: ADMIN_USER
+      value: admin
+    - name: WILDFLY_PASS
+      value: ChangeMe
+    # - name: NO_ADMIN
+    #   value: false
+    # - name: HEALTHCHECK_URLS
+    #   value: http://localhost:8080\nhttp://localhost:8080/ths-web/html/public/common/processCompleted.xhtml
+    # - name: TZ
+    #   value: Europe/Berlin
+    # OPTIMIZING
+    #############
+    # here you can optimize the java-parameters for running wildfly.
+    # more about:
+    #  -Xms and -Xmx -> https://java2blog.com/xms-xmx-parameter-java/
+    #  -Dorg.apache.cxf.stax.maxChildElements (default:50000) -> https://cxf.apache.org/docs/security.html#Security-ControllingLargeRequestPayloads
+    - name: JAVA_OPTS
+      value: -server -Xms1G -Xmx3G -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=1G -XX:StringTableSize=1000003 -Dorg.apache.cxf.stax.maxChildElements=100000 -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true -Djboss.modules.system.pkgs=org.jboss.byteman
+    # default 10485760 (=10MB)
+    #    - name: MAX_POST_SIZE
+    #      value: 104857600
+    ## FHIR Interface
+    - name: TTP_FHIR_KEYCLOAK_REALM
+      value: ttp
+    - name: TTP_FHIR_KEYCLOAK_CLIENT_ID
+      value: ttp-fhir
+    - name: TTP_FHIR_KEYCLOAK_SERVER_URL
+      value: <PROTOCOL://HOST_OR_IP:PORT/auth/>
+    - name: TTP_FHIR_KEYCLOAK_CLIENT_SECRET
+      value: <CLIENT_SECRET>
+    - name: TTP_FHIR_KEYCLOAK_ENABLE
+      value: false
+    image: docker.io/mosaicgreifswald/wildfly:26
+    resources: {}
+    ports:
+    - containerPort: 8080
+      hostPort: 8085
+      protocol: TCP
+    - containerPort: 9990
+      hostPort: 9990
+      protocol: TCP
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+    volumeMounts:
+    - mountPath: /entrypoint-wildfly-cli
+      name: var-disk1-containers-gics010-app-jboss
+    - mountPath: /entrypoint-wildfly-deployments
+      name: var-disk1-containers-gics010-app-deployments
+    - mountPath: /entrypoint-wildfly-addins
+      name: var-disk1-containers-gics010-app-addins
+    workingDir: /opt/mosaic/
+    restartPolicy: Always
+  volumes:
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-initfiles
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles/gics
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-gicsinit
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles/gics/jboss
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-app-jboss
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles/gics/deployments
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-app-deployments
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/applogs
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-app-logs
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/appaddins
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-app-addins
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/appcacerts
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-app-cacerts
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles/gics/sqls
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-db-init
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/dbconf
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-db-conf
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/dbdata
+      type: DirectoryOrCreate
+    name: var-disk1-containers-gics010-db-data
+  - hostPath:
+      path: /var/disk1/containers/gics010/data/initfiles/workdir
+      type: DirectoryOrCreate
+    name: var-disk1-containers-node001-workdir

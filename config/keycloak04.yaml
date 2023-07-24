@@ -1,0 +1,98 @@
+#
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# prepare:
+#  mkdir -p /var/disk1/containers/keycloak04/data/{dbdata,dbconf}
+# create:   podman play kube ./<thisfile>.yml
+# destroy:  podman play kube ./<thisfile>.yml --down
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2022-07-27T02:38:36Z"
+  labels:
+    app: keycloak04
+  name: keycloak04
+spec:
+  containers:
+  - name: db
+    # command:
+    # - postgres
+    env:
+    - name: HOSTNAME
+      value: postgres:127.0.0.1
+      # value: service_postgres_1:127.0.0.1
+    - name: container
+      value: podman
+    - name: LANG
+      value: en_US.utf8
+    - name: POSTGRES_DB
+      value: keycloak
+    - name: POSTGRES_PASSWORD
+      value: ChangeMe
+    - name: PGDATA
+      value: /var/lib/postgresql/data
+    - name: POSTGRES_USER
+      value: keycloak
+    # image: docker.io/library/postgres:14.4-alpine3.16
+    image: docker.io/library/postgres:15.3
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities: {}
+      privileged: false
+      readOnlyRootFilesystem: false
+    workingDir: /
+    volumeMounts:
+    - mountPath: /var/lib/postgresql/data
+      name: var-disk1-containers-keycloak04-db-data
+  - name: app
+    args:
+    # - start-dev
+    - start --hostname=iam.server.com
+    - --proxy edge
+    env:
+    - name: PROXY_ADDRESS_FORWARDING
+      value: true
+    - name: KC_LOG_LEVEL
+      value: INFO
+      # value: DEBUG
+    - name: KC_DB
+      value: postgres
+    - name: KC_DB_URL
+      value: jdbc:postgres://localhost/keycloak
+    - name: KC_DB_SCHEMA
+      value: public
+    - name: KC_DB_USERNAME
+      value: keycloak
+    - name: KC_DB_PASSWORD
+      value: ChangeMe
+    - name: KEYCLOAK_ADMIN
+      value: admin
+    - name: KEYCLOAK_ADMIN_PASSWORD
+      value: ChangeMe
+    image: quay.io/keycloak/keycloak:22.0.1
+    resources: {}
+    ports:
+    - containerPort: 8080
+      hostPort: 8082
+      protocol: TCP
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+    # workingDir: /var/www/html
+  restartPolicy: Always
+  volumes:
+  - hostPath:
+      path: /var/disk1/containers/keycloak04/data/dbdata
+      type: DirectoryOrCreate
+    name: var-disk1-containers-keycloak04-db-data
+status: {}

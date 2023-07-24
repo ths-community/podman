@@ -1,0 +1,18 @@
+[Unit]
+Description=Podman pod-gics.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+Type=simple
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+ExecStartPre=/usr/bin/podman pod rm -f -i gics
+ExecStart=/usr/bin/podman play kube /home/core/.config/gicsonly.yaml
+
+ExecStop=/usr/bin/podman pod stop gics
+ExecStopPost=/usr/bin/podman pod rm gics
+
+[Install]
+WantedBy=default.target
