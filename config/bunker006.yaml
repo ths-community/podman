@@ -44,188 +44,124 @@ spec:
     - name: MULTISITE
       value: "yes"
     - name: SERVER_NAME
-      value: bwadm.citizens4digital.com cossen.citizens4digital.com oberhain.citizens4digital.com pve29.citizens4digital.com pve30.citizens4digital.com sorry.citizens4digital.com www.citizens4digital.com clock.citizens4digital.com gics.citizens4digital.com iam.citizens4digital.com demo.citizens4digital.com
-    - name: www.citizens4digital.com_SERVER_NAME
-      value: www.citizens4digital.com
-    - name: www.citizens4digital.com_AUTO_LETS_ENCRYPT
+      value: sorry.server.com www.server.com clock.server.com gics.server.com iam.server.com demo.server.com
+    - name: www.server.com_SERVER_NAME
+      value: www.server.com
+    - name: www.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: www.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: www.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: www.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: www.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: sorry.citizens4digital.com_SERVER_NAME
-      value: sorry.citizens4digital.com
-    - name: sorry.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: sorry.server.com_SERVER_NAME
+      value: sorry.server.com
+    - name: sorry.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: sorry.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: sorry.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: sorry.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: sorry.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: sorry.citizens4digital.com_USE_CORS
+    - name: sorry.server.com_USE_CORS
       value: "yes"
-    # - name: sorry.citizens4digital.com_CONTENT_SECURITY_POLICY
+    # - name: sorry.server.com_CONTENT_SECURITY_POLICY
     #   value: "object-src 'none'; frame-ancestors 'self';"
-    - name: cossen.citizens4digital.com_SERVER_NAME
-      value: cossen.citizens4digital.com
-    - name: cossen.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: demo.server.com_SERVER_NAME
+      value: demo.server.com
+    - name: demo.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: cossen.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: cossen.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: demo.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: demo.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: oberhain.citizens4digital.com_SERVER_NAME
-      value: oberhain.citizens4digital.com
-    - name: oberhain.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: demo.server.com_USE_REVERSE_PROXY
       value: "yes"
-    - name: oberhain.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: oberhain.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
-      value: "yes"
-    - name: pve29.citizens4digital.com_SERVER_NAME
-      value: pve29.citizens4digital.com
-    - name: pve29.citizens4digital.com_AUTO_LETS_ENCRYPT
-      value: "yes"
-    - name: pve29.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: pve29.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
-      value: "yes"
-    - name: pve29.citizens4digital.com_USE_REVERSE_PROXY
-      value: "yes"
-    - name: pve29.citizens4digital.com_REVERSE_PROXY_WS
-      value: "yes"
-    - name: pve29.citizens4digital.com_REVERSE_PROXY_URL
+    - name: demo.server.com_REVERSE_PROXY_URL
       value: /
-    - name: pve29.citizens4digital.com_REVERSE_PROXY_HOST
-      value: https://172.29.12.29:8006
-    - name: pve29.citizens4digital.com_ALLOWED_METHODS
-      value: GET|POST|PUT|HEAD
-    - name: pve29.citizens4digital.com_LIMIT_REQ_RATE
-      value: 70r/s
-    - name: pve30.citizens4digital.com_SERVER_NAME
-      value: pve30.citizens4digital.com
-    - name: pve30.citizens4digital.com_AUTO_LETS_ENCRYPT
-      value: "yes"
-    - name: pve30.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: pve30.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
-      value: "yes"
-    - name: pve30.citizens4digital.com_USE_REVERSE_PROXY
-      value: "yes"
-    - name: pve30.citizens4digital.com_REVERSE_PROXY_WS
-      value: "yes"
-    - name: pve30.citizens4digital.com_REVERSE_PROXY_URL
-      value: /
-    - name: pve30.citizens4digital.com_REVERSE_PROXY_HOST
-      value: https://172.29.12.30:8006
-    - name: pve30.citizens4digital.com_ALLOWED_METHODS
-      value: GET|POST|PUT|HEAD
-    - name: pve30.citizens4digital.com_LIMIT_REQ_RATE
-      value: 70r/s
-    - name: demo.citizens4digital.com_SERVER_NAME
-      value: demo.citizens4digital.com
-    - name: demo.citizens4digital.com_AUTO_LETS_ENCRYPT
-      value: "yes"
-    - name: demo.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: demo.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
-      value: "yes"
-    - name: demo.citizens4digital.com_USE_REVERSE_PROXY
-      value: "yes"
-    - name: demo.citizens4digital.com_REVERSE_PROXY_URL
-      value: /
-    - name: demo.citizens4digital.com_REVERSE_PROXY_HOST
+    - name: demo.server.com_REVERSE_PROXY_HOST
       value:  http://127.0.0.1:9000
-    - name: demo.citizens4digital.com_USE_AUTH_BASIC
+    - name: demo.server.com_USE_AUTH_BASIC
       value: "yes"
-    - name: demo.citizens4digital.com_AUTH_BASIC_USER
-      value: karlder
-    - name: demo.citizens4digital.com_AUTH_BASIC_PASSWORD
-      value: kaefer
-    - name: clock.citizens4digital.com_SERVER_NAME
-      value: clock.citizens4digital.com
-    - name: clock.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: demo.server.com_AUTH_BASIC_USER
+      value: demo
+    - name: demo.server.com_AUTH_BASIC_PASSWORD
+      value: ChangeMe
+    - name: clock.server.com_SERVER_NAME
+      value: clock.server.com
+    - name: clock.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: clock.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: clock.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: clock.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: clock.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: iam.citizens4digital.com_SERVER_NAME
-      value: iam.citizens4digital.com
-    - name: iam.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: iam.server.com_SERVER_NAME
+      value: iam.server.com
+    - name: iam.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: iam.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: iam.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: iam.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: iam.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: iam.citizens4digital.com_LIMIT_REQ_RATE
+    - name: iam.server.com_LIMIT_REQ_RATE
       value: 90r/s
-    - name: iam.citizens4digital.com_USE_REVERSE_PROXY
+    - name: iam.server.com_USE_REVERSE_PROXY
       value: "yes"
-    - name: iam.citizens4digital.com_REVERSE_PROXY_URL
+    - name: iam.server.com_REVERSE_PROXY_URL
       value: /
-    - name: iam.citizens4digital.com_REVERSE_PROXY_HOST
+    - name: iam.server.com_REVERSE_PROXY_HOST
       value: http://127.0.0.1:8082 ## only if Hostnetwork==true else use eth0 IP addr
-    - name: iam.citizens4digital.com_COOKIE_FLAGS
+    - name: iam.server.com_COOKIE_FLAGS
       value: " "
       # value: / HttpOnly SameSite
-    - name: iam.citizens4digital.com_COOKIE_AUTO_SECURE_FLAG
+    - name: iam.server.com_COOKIE_AUTO_SECURE_FLAG
       value: "yes"
-    - name: iam.citizens4digital.com_REVERSE_PROXY_HEADERS
+    - name: iam.server.com_REVERSE_PROXY_HEADERS
       value: "X-Forwarded-Proto: https"
-    - name: iam.citizens4digital.com_USE_MODSECURITY
+    - name: iam.server.com_USE_MODSECURITY
       value: "no"
-    - name: iam.citizens4digital.com_USE_MODSECURITY_CRS
+    - name: iam.server.com_USE_MODSECURITY_CRS
       value: "no"
-    - name: iam.citizens4digital.com_ALLOWED_METHODS
+    - name: iam.server.com_ALLOWED_METHODS
       value: "GET|POST|PUT|HEAD"
-    - name: iam.citizens4digital.com_REFERRER_POLICY
+    - name: iam.server.com_REFERRER_POLICY
       value: "*"
-    - name: iam.citizens4digital.com_PERMISSIONS_POLICY
+    - name: iam.server.com_PERMISSIONS_POLICY
       value: " "
-    - name: iam.citizens4digital.com_CONTENT_SECURITY_POLICY
+    - name: iam.server.com_CONTENT_SECURITY_POLICY
       value: "object-src 'none'; frame-ancestors 'self';"
-    - name: iam.citizens4digital.com_FEATURE_POLICY
+    - name: iam.server.com_FEATURE_POLICY
       value: " "
-    - name: gics.citizens4digital.com_CONTENT_SECURITY_POLICY
+    - name: gics.server.com_CONTENT_SECURITY_POLICY
       value: "object-src 'none'; frame-ancestors 'self';"
-    - name: gics.citizens4digital.com_USE_MODSECURITY
+    - name: gics.server.com_USE_MODSECURITY
       value: "no"
-    - name: gics.citizens4digital.com_USE_MODSECURITY_CRS
+    - name: gics.server.com_USE_MODSECURITY_CRS
       value: "no"
-    - name: gics.citizens4digital.com_REVERSE_PROXY_HEADERS
+    - name: gics.server.com_REVERSE_PROXY_HEADERS
       value: "X-Forwarded-Proto: https"
-    - name: gics.citizens4digital.com_SERVER_NAME
-      value: gics.citizens4digital.com
-    - name: gics.citizens4digital.com_AUTO_LETS_ENCRYPT
+    - name: gics.server.com_SERVER_NAME
+      value: gics.server.com
+    - name: gics.server.com_AUTO_LETS_ENCRYPT
       value: "yes"
-    - name: gics.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: gics.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
+    - name: gics.server.com_EMAIL_LETS_ENCRYPT
+      value: privacy@server.com
+    - name: gics.server.com_USE_LETS_ENCRYPT_STAGING
       value: "yes"
-    - name: gics.citizens4digital.com_USE_REVERSE_PROXY
+    - name: gics.server.com_USE_REVERSE_PROXY
       value: "yes"
-    - name: gics.citizens4digital.com_COOKIE_FLAGS
+    - name: gics.server.com_COOKIE_FLAGS
       value: " "
-    - name: gics.citizens4digital.com_REVERSE_PROXY_URL
+    - name: gics.server.com_REVERSE_PROXY_URL
       value: /
       # value: /gics-web/
-    - name: gics.citizens4digital.com_REVERSE_PROXY_HOST
+    - name: gics.server.com_REVERSE_PROXY_HOST
       value:  http://127.0.0.1:8085
       # value:  http://172.29.12.158:8085/gics-web/
-    - name: gics.citizens4digital.com_REVERSE_PROXY_INTERCEPT_ERRORS
+    - name: gics.server.com_REVERSE_PROXY_INTERCEPT_ERRORS
       value: "no"
-    - name: gics.citizens4digital.com_LIMIT_REQ_RATE
+    - name: gics.server.com_LIMIT_REQ_RATE
       value: 70r/s
-#    - name: gics.citizens4digital.com_REVERSE_PROXY_HEADERS
+#    - name: gics.server.com_REVERSE_PROXY_HEADERS
 #      value: "X-Script-Name /gics-web"
-    - name: bwadm.citizens4digital.com_SERVER_NAME
-      value: bwadm.citizens4digital.com
-    - name: bwadm.citizens4digital.com_AUTO_LETS_ENCRYPT
-      value: "yes"
-    - name: bwadm.citizens4digital.com_EMAIL_LETS_ENCRYPT
-      value: privacy@citizens4digital.com
-    - name: bwadm.citizens4digital.com_USE_LETS_ENCRYPT_STAGING
-      value: "yes"
     # ports:
     # - containerPort: 8080
     #   hostPort: 8080
