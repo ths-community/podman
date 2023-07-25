@@ -49,9 +49,9 @@ spec:
       name: var-disk1-containers-keycloak04-db-data
   - name: app
     args:
-    # - start-dev
-    - start --hostname=iam.server.com
-    - --proxy edge
+    - start-dev
+    # - start --hostname=iam.server.com
+    # - --proxy edge
     env:
     - name: PROXY_ADDRESS_FORWARDING
       value: true

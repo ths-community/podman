@@ -268,6 +268,16 @@ and change ownership to 'core' which is the default unprivileged user in CoreOS 
 avoid use of 'root'
 
 `sudo chown core /var/disk1/containers`
+
+**SELINUX attribute**
+
+CoreOS has SELINUX enabled by default - we need to run a special command to tell SELINUX that volumes for containers will be created under this path
+
+`chcon -t container_file_t -R /var/disk1/containers/`
+
+this will (hopefully) be inherited to any newly created file and folders - if not, re-apply this command if you see issues in container logfiles,
+especially write permissions denied. Background is that 'root' containers will be started in the UID of the regular user `core` but non-root containers
+will be mapped to an other UID e.g. 568528 which finds then shared folders without sufficient permissions (mainly 'write' is missing)
  
 **login setting**
 
@@ -283,10 +293,136 @@ in order to test that everything is setup correctly please reboot again now with
 
 `sudo reboot`
 
+after sucessful reboot CoreOS is ready to use, has a seperated data disk for easier disaster recovery and will automatically update at least once a month
+for better security - and is ready to run our container workloads like gICS, keycloak or bunkerweb (WAF = web application firewall)
 
+ 
 ## install podman on a different Host OS 
 
-your host OS may have already package to install "podman" easily - but note that these packages may contain older version -
+In case you decide not to install CoreOS (or "flatcar Linux") to get a podman runtime you can still install it into any major Operating Systems (OS).
+Maybe your current host OS (debian, ubuntu, etc) have already a podman package to install via your standard package manager easily - but note that these packages may contain an older version -
 "podman" is actively delevoped and new features and versions are issued frequently.
 Please go to https://podman.io or use your favorite search engine to find recent installation packages.
+
+## a closer look on podman
+
+### where podman is similar to docker
+
+even fundamental concepts are different podman was developed as "drop in" replacement for docker - so as regular user you can use podman in `set podman=docker` mode.
+
+Well known commands like `podman run`, `podman ps`, `podman stop` etc will work exactly like their respective counterparts in docker - also for regular users.
+There is no need for such a user to be added to a docker group
+
+### where podman is different
+
+* resources like networks or namespaces are no longer shared on machine level - two regular users can run container workloads using the same names without any interference.
+* there is no docker.sock - this may turn out as larger issue if you copy docker scripts or receipes to run under podman. Any access to docker.sock will fail.
+There is an options to start a service which provides such a socket for compatibility reasons - usually it is not needed
+* docker workloads are started automatically at boot time - for podman we will use systemd in user mode(!) to do the same (see examples in this repo)
+* podman can bundle multiple container workloads in a "pod" - a concept well-known in kubernetes but unknown in docker - "pods" are described in YAML files similar
+to kubernetes and are very useful in use-cases in which
+an application like gICS or keycloak need a database to run - pods have an *internal* network in which any2any port can communicate 
+* when a user logs off all containers will stop - use "loginctl enable-linger username" to avoid this and allow containers to continue running
+
+## use-cases - general notes
+
+please get this github repo by
+
+`git clone https://github.com/ths-community/podman.git`
+
+it contains a folder `config` - these contents should go under `~/.config` - please note any file or folder beginning with '.' are hidden by default in git and filesystem.
+This is why in github it is named 'config' and must be renamed after cloning:
+
+```
+cd podman
+# mv config ~/.config
+# or (whatever you prefer)
+cp -R config ~/.config
+```
+
+in this `~/.config` folder you will find the YAML files for various workfloads to run as 'pod' - before you start anything check the YAML file for
+passwords to be changed from `ChangeMe` to an unique secret one.
+
+Note: podman recently got a new feature to handle 'secrets' similar to kubernetes - which is not yet reflected in these scripts as of this writing.
+
+### use case gICS
+
+the YAML file contains 'all-in-one' including all settings - there is no seperate file with environment variables to be considers - it is all included.
+
+It also contains a so-called 'initcontainer' which runs only once. The purpose of this special container is to prepare all files and folders which
+gICS expects to find during boot of the container (which is usually done in docker-compose in the original setup). 
+Furthermore it downloads the ZIP File from the ths-greifswald.de website and stores a copy in case of restart to avoid another (unnecessary) download.
+In case gICS was already installed it will be moved into a backup-folder with timestamp - and these copies should be deleted every now and then.
+
+**prepare**
+Note: The YAML file cannot execute shell commands on the host - so in order to create the necessary folder structure under 
+
+`/var/disk1/conatiners` please find the commands to prepare the host environment in the first lines as comment in the YAML file
+
+in this case:
+
+```
+# prepare:
+#  mkdir -p /var/disk1/containers/gics010/data/{initfiles,dbconf,dbdata,applogs,appadins,appcacerts,workdir}
+```
+
+copy the `mkdir` line and execute in shell - usually no 'sudo' is required unless explicitely stated
+
+**test run**
+
+After all folders are created on the host we can start creating the pod by
+
+`podman play kube ~/.config/gicsonly.yaml`
+
+then watch the logfiles
+
+`podman logs gics-mysql`
+
+for the database and
+
+`podman logs gics-wildfly`
+
+for the application
+
+If anything goes wrong check the logfile messages to identify the root cause.
+
+*After* the logfiles had been evaluated - or if everything went just well - you can stop the pod for proper cleanup by
+
+`podman play kube ~/.config/gicsonly.yaml --down`
+
+to start 'gics' automatically at boottime enter the following command
+
+
+`systemctl --user enable  pod-gics.service --now`
+
+(yes, believe it or not - also users can add systemd services)
+
+the 'magic' behind is a file at
+
+`~/.config/systemd/user/pod-gics.service`
+
+which you can adapt or finetune to your needs - e.g. ensure it will only start *after* the keycloak service had been started successfully.
+
+
+```
+[Unit]
+Description=Podman pod-gics.service
+
+[Service]
+Restart=on-failure
+RestartSec=30
+Type=simple
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+ExecStartPre=/usr/bin/podman pod rm -f -i gics
+ExecStart=/usr/bin/podman play kube /home/core/.config/gicsonly.yaml
+
+ExecStop=/usr/bin/podman pod stop gics
+ExecStopPost=/usr/bin/podman pod rm gics
+
+[Install]
+WantedBy=default.target
+```
+
 
