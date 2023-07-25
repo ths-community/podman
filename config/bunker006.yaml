@@ -4,7 +4,8 @@
 # prepare:
 #   mkdir -p /var/disk1/containers/bunker006/data/{ngxconf,bwdata}
 #   chmod 770 /var/disk1/containers/bunker006/data/*
-#   sudo chgrp 100100 /var/disk1/containers/bunker006/data/*
+#   sudo chown 524388:524388 /var/disk1/containers/bunker006/data/*
+#   chcon -t container_file_t -R /var/disk1/containers/bunker006/data/
 # 
 # Created with podman-4.3.1
 #

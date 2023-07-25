@@ -485,5 +485,82 @@ In order to avoid issues caused by gICS and keycloak starting at the same time a
 the systemd file of gics should be modified to reflect the dependency to keycloak - and allow systemd to boot in the correct order (TO-DO)
 
 
+### use case bunkerweb (web application firewall - experimental)
+
+Again, the YAML file contains 'all-in-one' including all settings - there is no seperate file with environment variables to be considers - it is all included.
+
+bunkerweb is an open-source web application firewall (WAF) maintained by a french cybersecurity company (as a kind of "business card" to attract interested customers).
+It combines a reverse proxy with rule based protection rules (main OWASP) - and takes care of the certificate handling - and can also act as static webserver.
+Likely there is already a (commercial) WAF in your organisation for internet facing applications - however bunkerweb might still be useful for demonstration 
+purposes and development setups under real TLS certificates - it also help to develop the rules for the *any* WAF as this is usually a time consuming
+trial-and-error effort - especially if logfiles always need to be requested from the IT team.
+
+**fixed IP Address**
+
+If you are lucky you already have an routable Internet IP Address which you could easily forward to the WAF - in case you don't have such an address
+you could follow this plan: book a small (the smallest) linux box at any cloud provider at your choice - usually you can book a fixed IP address 
+for this box for a few cents more - there is no requirement to this linux box (e.g. any minimal ubuntu should do) it just has to be a minimum amount of
+packages installed for a small attack surface - all we need is the kernel - which already has a wireguard device included - and the wireguard tools for setup.
+For reference, as of this writing, hetzner cloud should allow to operate such an frontend for a total of less than 5€/month (server class CX11) - which is acceptable for your own
+permanent fixed IP address - whereas AWS and Azure likely will charge around 10€/month minimum for the same. 
+
+**wireguard config**
+The goal is to forward the (only the expected and intended) traffic from internet thru this tunnel - find sample files in the "wireguard" folder in this repo.
+There are plenty of excellent guides how to generate your own keys and setup the tunnel: 'frontend' will be the machine with Internet access while
+'backend' is your machine which contains bunkerweb, keycloak and gICS. The sample files also show to map the traffic from port 80/tcp and 443/tcp to
+8080/tcp and 8443/tcp for the ports on the container side - to avoid (unsecure) system modifications for privileged port smaller than 1024.
+
+CoreOS already with all necessary wireguard drivers and components - but, again, due to SELINUX constraints, wireguard in CoreOS (and Fedora and RedHat
+Enterprise Linux) must be configured the `nmcli` instead of the classic wireguard tools.
+ 
+
+**prepare**
+
+start with creating the necessary folders:
+
+```
+mkdir -p /var/disk1/containers/bunker006/data/{ngxconf,bwdata}
+chmod 770 /var/disk1/containers/bunker006/data/*
+sudo chown 524388:524388 /var/disk1/containers/bunker006/data/*
+chcon -t container_file_t -R /var/disk1/containers/bunker006/data/
+```
+
+As now your own domainnames will be used (or at least a free service like nip.io which turns any IP address into a DNS name, e.g. IP address 1.11.233.44 into
+1.11.233.44.nip.io and 1-11-233-44.nip.io) please review the YAML carefully - and read the documentation at https://docs.bunkerweb.io/
+
+Note: creating letsencrypt certificates for xyz.nip.io is possible - but it requires some patience and ability/willingsness to read logfiles.
+Reason: there is a max limit of certificates which can be created per domain - which is very often reached for a generic service like 'nip.io'.
+However, if this limit is reached and it refuses to generate a new certificate, the message also contains a UTC timestamp by when the counter is reset
+(usually every top of an hour, timestamp is UTC). Then retry shortly after. 
+
+**test run**
+
+After all folders are created on the host we can start creating the pod by
+
+`podman play kube ~/.config/bunker006.yaml`
+
+then watch the logfiles
+
+`podman logs bunkerweb-app`
+
+Especially if the write access to the persistant volume shows any error due to unsufficient permissions.
+
+If anything goes wrong check the logfile messages to identify the root cause.
+
+*After* the logfiles had been evaluated and all issues fixed - or if everything went just well - you can stop the pod for proper cleanup by
+
+`podman play kube ~/.config/bunker006.yaml --down`
+
+**autostart at boot**
+
+to start 'bunker' automatically at boottime enter the following command
+
+
+`systemctl --user enable  pod-bunkerweb.service --now`
+
+**open topic**
+
+provide more detailed instructions including static webserver for easier troubleshooting (TO-DO)
+
 
 
