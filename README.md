@@ -386,9 +386,11 @@ for the application
 
 If anything goes wrong check the logfile messages to identify the root cause.
 
-*After* the logfiles had been evaluated - or if everything went just well - you can stop the pod for proper cleanup by
+*After* the logfiles had been evaluated and all issues fixed - or if everything went just well - you can stop the pod for proper cleanup by
 
 `podman play kube ~/.config/gicsonly.yaml --down`
+
+**autostart at boot**
 
 to start 'gics' automatically at boottime enter the following command
 
@@ -401,7 +403,8 @@ the 'magic' behind is a file at
 
 `~/.config/systemd/user/pod-gics.service`
 
-which you can adapt or finetune to your needs - e.g. ensure it will only start *after* the keycloak service had been started successfully.
+which you can adapt or finetune to your needs - e.g. ensure it will only start *after* the keycloak service had been started successfully if your giCS workload
+is configured (depends on) keycloak authentication - instead of GRAS.
 
 
 ```
@@ -424,5 +427,63 @@ ExecStopPost=/usr/bin/podman pod rm gics
 [Install]
 WantedBy=default.target
 ```
+
+### use case keycloak
+
+Again, the YAML file contains 'all-in-one' including all settings - there is no seperate file with environment variables to be considers - it is all included.
+
+There is no initcontainer in this keycloak pod yet - you just get a freshly installed keycloak which only contains the 'master' realm.
+The Tts realm needs to be created manually following the instructions provided by Treuhandstelle - because keycloak recently moved thru a lot
+of major versions with breaking changes and it was rather unsuccessful to restore a setup created by an earlier version. So auto-prepare an environment
+for gICS and other services is still on the TO-DO list.
+
+**prepare**
+
+start with creating the necessary folders:
+
+`mkdir -p /var/disk1/containers/keycloak04/data/{dbdata,dbconf}`
+
+keycloak does not share use any persistant folder but fully relies on the database to provide persistence.
+
+Also check the YAML file for passwords and check all settings - especially the start of keycloak: by default YAML will use "-dev-start"
+to start a 'non-poduction' dev instance. To start a 'production' instance comment "-dev-start" and uncomment "start" followed by a hostname (which is checked!).
+In this setup you run keycloak most likely behind a reverse proxy or web application firewall so uncomment "-edge" as well for this case - which is
+required for keycloak to handle the web traffic and response correctly. 
+
+**test run**
+
+After all folders are created on the host we can start creating the pod by
+
+`podman play kube ~/.config/keycloak04.yaml`
+
+then watch the logfiles
+
+`podman logs keycloak04-db`
+
+for the database and
+
+`podman logs keycloak04-app`
+
+for the application
+
+If anything goes wrong check the logfile messages to identify the root cause.
+
+*After* the logfiles had been evaluated and all issues fixed - or if everything went just well - you can stop the pod for proper cleanup by
+
+`podman play kube ~/.config/keycloak04.yaml --down`
+
+**autostart at boot**
+
+to start 'keycloak' automatically at boottime enter the following command
+
+
+`systemctl --user enable  pod-keycloak.service --now`
+
+**open topic**
+
+In order to avoid issues caused by gICS and keycloak starting at the same time and gICS throwing errors being unable to connect to keycloak 
+the systemd file of gics should be modified to reflect the dependency to keycloak - and allow systemd to boot in the correct order (TO-DO)
+
+
 
 
